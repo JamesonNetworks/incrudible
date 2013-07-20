@@ -1,3 +1,7 @@
+var Db = require('mongodb').Db,
+	Server = require('mongodb').Server,
+	conf = require('./config.json');
+
 var mongoose = require('mongoose')
 var Schema = mongoose.Schema;
 
@@ -9,26 +13,9 @@ var currentObject = {};
 var status = {};
 var message = {};
 
-// Set up promises for DB loads
-var promise = new mongoose.Promise;
-var callback = function(object) {
-	if(object.length == 0) {
-		message = JSON.stringify({status : "not_found"});
-		done(message);
-	}
-	else {
-		message = JSON.stringify(object);
-		done(message);
-	}
-}
-var errback = function(object) {
-	message = 'Database save error, Err:' + JSON.stringify(object);
-	throw new Error(message);
-	done(message);
-}
-//Add mongoose callbacks
-promise.addCallback(callback);
-promise.addErrback(errback);
+var returnToCallback = false;
+
+var db = {};
 
 // Save success message generator
 function SAVE_SUCCESS(object) { 
@@ -36,64 +23,85 @@ function SAVE_SUCCESS(object) {
 };
 
 //Private helper functions
-function loadFromModel() {
-	mongoose.connection.once('open', function (res) {
-		currentModel.find({ id: object.id}, function(err, object) {
-			if(err) {
-				promise.error(err);
-				return;
-			}
-			promise.complete(object);
-		}).exec();
+function loadFromCollection() {
+	db.open(function(err, db) {
+		if (err) {
+        	console.log(err);
+    	} 
+    	else {
+			//console.log(db);
+			db.collection(currentObject.structure, function(err, collection) {
+				if(err) {
+					console.log(err);
+				}
+	            collection.count(function(err, count) {
+	            	if(err) {
+	            		console.log(err);
+	            	}
+	            	console.log(count);
+	                console.log("There are " + count + " records.");
+	            });
+				done("success", currentObject);
+				db.close();
+			})
+		}
 	});
 }
 
-function saveUsingModel() {
-	// Populate the fields in the model
-	for(var item in object) {
-		if(currentModel.hasOwnProperty(item)) {
-			currentModel[item] = object[item];
+function saveToCollection() {
+	db.open(function(err, db) {
+		if (err) {
+        	console.log(err);
+    	} 
+    	else {
+			db.createCollection(currentObject.structure, function(err, collection) {
+				collection.insert(currentObject);
+				done("success", currentObject);
+				db.close();
+			})
 		}
-		else {
-			throw new Error('The model did not have properties in the object');
-		}
-	}
+	});
+}
 
-	mongoose.connection.once('open', function () {
-		currentModel.save(function (err) {
-			if(err) {
-				message = 'Creation Error, Err:' + JSON.stringify(err);
-				throw new Error(message);
-				done(message);
-			}
-			else {
-				message = SAVE_SUCCESS(object);
-				done(message);
-			}
-		})
-	})
+function deleteFromCollection() {
+	db.open(function(err, db) {
+		if (err) {
+        	console.log(err);
+    	} 
+    	else {
+			db.collection(currentObject.structure, function(err, collection) {
+				console.log(currentObject);
+				collection.remove({id : currentObject.id}, function(err) {
+					if(err) {
+						console.log(err);
+					}
+					done("success", currentObject);
+					db.close();
+				});
+			})
+		}
+	});
 }
 
 function done(message, object) {
-	mongoose.disconnect();
 	if(object === null) {
 		if(returnToCallback) {
-			response(message);
+			currentResponse(message);
 		}
 		else {
-			response.writeHead(200, '{ Content-Type : application/json }');
-			response.write(message);
-			response.end();
+			currentResponse.writeHead(200, '{ Content-Type : application/json }');
+			currentResponse.write(message);
+			currentResponse.end();
 		}
 	}
 	else {
 		if(returnToCallback) {
-			response(message);
+			currentResponse(message);
 		}
 		else {
-			response.writeHead(200, '{ Content-Type : application/json }');
-			response.write(message);
-			response.end();
+			currentResponse.writeHead(200, '{ Content-Type : application/json }');
+			currentResponse.write(message);
+			currentResponse.end();
 		}
 	}
 }
@@ -102,11 +110,8 @@ function done(message, object) {
 // and a response object. If the response object is an express response object, the
 // model will be saved and the response outputted to the response. If the response 
 // is a callback, the message will be sent to the callback.
-module.exports = function crud(dbConnectString, mongooseModel, object, method, response) {
-	// Variables:
-	// Whether to return to callback or not
-	var returnToCallback = false;
-
+module.exports = function crud(dbName, object, method, response) {
+	db = new Db(dbName, new Server(conf.db.host, conf.db.port), {safe:false});
 	//Determine if the passed in object is an object or a callback
 	if (typeof response === 'function') {
 		// We have a function!
@@ -116,23 +121,19 @@ module.exports = function crud(dbConnectString, mongooseModel, object, method, r
 	// Setup variables for use in save and load
 	currentResponse = response;
 	currentMethod = method;
-	currentModel = mongooseModel;
 	currentObject = object;
 
-	// DB logging
-	//if(true) { mongoose.set('debug', true); };
-	mongoose.connect(dbConnectString, function (err) {
-		// if we failed to connect, abort
-		if (err) throw err;
-
-		switch(currentMethod) {
-			case 'save':
-				saveUsingModel();
-			break;
-			case 'load':
-				loadFromModel();
-			break;
-			case default:
-		}
-	})
+	switch(currentMethod) {
+		case 'POST':
+			saveToCollection();
+		break;
+		case 'GET':
+			loadFromCollection();
+		break;
+		case 'DELETE':
+			deleteFromCollection();
+		break;
+		default:
+			throw new Error('Unsupported method');
+	}
 }
