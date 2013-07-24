@@ -49,6 +49,7 @@ function saveToCollection() {
     	} 
     	else {
 			db.createCollection(currentObject.structure, function(err, collection) {
+				collection.insert(currentObject);
 				done("success", currentObject);
 				db.close();
 			})
