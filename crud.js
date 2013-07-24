@@ -2,9 +2,6 @@ var Db = require('mongodb').Db,
 	Server = require('mongodb').Server,
 	conf = require('./config.json');
 
-var mongoose = require('mongoose')
-var Schema = mongoose.Schema;
-
 var currentModel = {};
 var currentMethod = {};
 var currentResponse = {};
@@ -34,15 +31,11 @@ function loadFromCollection() {
 				if(err) {
 					console.log(err);
 				}
-	            collection.count(function(err, count) {
-	            	if(err) {
-	            		console.log(err);
-	            	}
-	            	console.log(count);
-	                console.log("There are " + count + " records.");
+				var returnItem;
+	            var cursor = collection.find({ id : currentObject.id}).toArray(function(err, documents) {
+	            	done("success", documents);
+	            	db.close();
 	            });
-				done("success", currentObject);
-				db.close();
 			})
 		}
 	});
@@ -50,6 +43,7 @@ function loadFromCollection() {
 
 function saveToCollection() {
 	db.open(function(err, db) {
+		debugger;
 		if (err) {
         	console.log(err);
     	} 
@@ -70,7 +64,6 @@ function deleteFromCollection() {
     	} 
     	else {
 			db.collection(currentObject.structure, function(err, collection) {
-				console.log(currentObject);
 				collection.remove({id : currentObject.id}, function(err) {
 					if(err) {
 						console.log(err);
@@ -96,11 +89,11 @@ function done(message, object) {
 	}
 	else {
 		if(returnToCallback) {
-			currentResponse(message);
+			currentResponse(message, object);
 		}
 		else {
 			currentResponse.writeHead(200, '{ Content-Type : application/json }');
-			currentResponse.write(message);
+			currentResponse.write(message, object);
 			currentResponse.end();
 		}
 	}
@@ -137,3 +130,4 @@ module.exports = function crud(dbName, object, method, response) {
 			throw new Error('Unsupported method');
 	}
 }
+
