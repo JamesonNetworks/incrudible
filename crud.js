@@ -49,7 +49,6 @@ function saveToCollection() {
     	} 
     	else {
 			db.createCollection(currentObject.structure, function(err, collection) {
-				collection.insert(currentObject);
 				done("success", currentObject);
 				db.close();
 			})
@@ -93,7 +92,8 @@ function done(message, object) {
 		}
 		else {
 			currentResponse.writeHead(200, '{ Content-Type : application/json }');
-			currentResponse.write(message, object);
+			currentResponse.write(message);
+			currentResponse.write(JSON.stringify(object));
 			currentResponse.end();
 		}
 	}
