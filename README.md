@@ -10,6 +10,8 @@ chance to see the object they get, whereas passing the response object will caus
 a message and/or the desired object into the body of the response as JSON.
 
 I'm using it in the following way on my unit tests:
+
+```node
 crud = require('incrudible');
 
 manageObject(parameters, type, req, function(message) {
@@ -19,3 +21,4 @@ manageObject(parameters, type, req, function(message) {
 function manageObject(param, type, req, callback) {
     crud(dbName, param, type, callback); // This builds the object
 }
+'''
