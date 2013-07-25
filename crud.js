@@ -26,16 +26,35 @@ function loadFromCollection() {
         	console.log(err);
     	} 
     	else {
-			//console.log(db);
 			db.collection(currentObject.structure, function(err, collection) {
 				if(err) {
 					console.log(err);
 				}
+				debugger;
 				var returnItem;
-	            var cursor = collection.find({ id : currentObject.id}).toArray(function(err, documents) {
-	            	done("success", documents);
-	            	db.close();
-	            });
+				if(currentObject.isCollection) {
+					var cursor = collection.find({useruuid: currentObject.useruuid}).toArray(function (err, documents) {
+						debugger;
+		            	if(documents.length > 0) {
+		            		done("success", documents);
+		            	}
+		            	else {
+		            		done("not found");
+		            	}
+		            	db.close();
+					});
+				}
+				else {
+		            var cursor = collection.find({ id : currentObject.id, useruuid: currentObject.useruuid }).toArray(function(err, documents) {
+		            	if(documents.length > 0) {
+		            		done("success", documents);
+		            	}
+		            	else {
+		            		done("not found");
+		            	}
+		            	db.close();
+		            });
+	            }
 			})
 		}
 	});
@@ -50,7 +69,9 @@ function saveToCollection() {
     	else {
 			db.createCollection(currentObject.structure, function(err, collection) {
 				collection.insert(currentObject);
-				done("success", currentObject);
+				ary = [];
+				ary.push(currentObject);
+				done("success", ary);
 				db.close();
 			})
 		}
@@ -77,13 +98,14 @@ function deleteFromCollection() {
 }
 
 function done(message, object) {
-	if(object === null) {
+	if(null == object) {
+		debugger;
 		if(returnToCallback) {
 			currentResponse(message);
 		}
 		else {
 			currentResponse.writeHead(200, '{ Content-Type : application/json }');
-			currentResponse.write(message);
+			currentResponse.write("{ \"message\": \"" + message + "\"}");
 			currentResponse.end();
 		}
 	}
@@ -92,9 +114,11 @@ function done(message, object) {
 			currentResponse(message, object);
 		}
 		else {
+			console.log(object);
+			console.log(message);
 			currentResponse.writeHead(200, '{ Content-Type : application/json }');
-			currentResponse.write(message);
-			currentResponse.write(JSON.stringify(object));
+			currentResponse.write("{ \"message\": \"" + message + "\",");
+			currentResponse.write("\"" + object[0].structure + "Container\" : " + JSON.stringify(object) + "}");
 			currentResponse.end();
 		}
 	}
