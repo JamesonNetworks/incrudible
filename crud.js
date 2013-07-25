@@ -33,16 +33,29 @@ function loadFromCollection() {
 				debugger;
 				var returnItem;
 				if(currentObject.isCollection) {
-					var cursor = collection.find({useruuid: currentObject.useruuid}).toArray(function (err, documents) {
-						debugger;
-		            	if(documents.length > 0) {
-		            		done("success", documents);
-		            	}
-		            	else {
-		            		done("not found");
-		            	}
-		            	db.close();
-					});
+					if(currentObject.hasParameters) {
+						var cursor = collection.find(currentObject.parameters).toArray(function (err, documents) {
+			            	if(documents.length > 0) {
+			            		done("success", documents);
+			            	}
+			            	else {
+			            		done("not found");
+			            	}
+			            	db.close();
+						});
+					}
+					else {
+						var cursor = collection.find({useruuid: currentObject.useruuid}).toArray(function (err, documents) {
+							debugger;
+			            	if(documents.length > 0) {
+			            		done("success", documents);
+			            	}
+			            	else {
+			            		done("not found");
+			            	}
+			            	db.close();
+						});
+					}
 				}
 				else {
 		            var cursor = collection.find({ id : currentObject.id, useruuid: currentObject.useruuid }).toArray(function(err, documents) {
@@ -111,11 +124,10 @@ function done(message, object) {
 	}
 	else {
 		if(returnToCallback) {
+			debugger;
 			currentResponse(message, object);
 		}
 		else {
-			console.log(object);
-			console.log(message);
 			currentResponse.writeHead(200, '{ Content-Type : application/json }');
 			currentResponse.write("{ \"message\": \"" + message + "\",");
 			currentResponse.write("\"" + object[0].structure + "Container\" : " + JSON.stringify(object) + "}");
@@ -134,6 +146,9 @@ module.exports = function crud(dbName, object, method, response) {
 	if (typeof response === 'function') {
 		// We have a function!
 		returnToCallback = true;
+	}
+	else {
+		returnToCallback = false;
 	}
 
 	// Setup variables for use in save and load
