@@ -30,7 +30,6 @@ function loadFromCollection() {
 				if(err) {
 					console.log(err);
 				}
-				debugger;
 				var returnItem;
 				if(currentObject.isCollection) {
 					if(currentObject.hasParameters) {
@@ -46,7 +45,6 @@ function loadFromCollection() {
 					}
 					else {
 						var cursor = collection.find({useruuid: currentObject.useruuid}).toArray(function (err, documents) {
-							debugger;
 			            	if(documents.length > 0) {
 			            		done("success", documents);
 			            	}
@@ -75,7 +73,6 @@ function loadFromCollection() {
 
 function saveToCollection() {
 	db.open(function(err, db) {
-		debugger;
 		if (err) {
         	console.log(err);
     	} 
@@ -112,7 +109,6 @@ function deleteFromCollection() {
 
 function done(message, object) {
 	if(null == object) {
-		debugger;
 		if(returnToCallback) {
 			currentResponse(message);
 		}
@@ -124,7 +120,6 @@ function done(message, object) {
 	}
 	else {
 		if(returnToCallback) {
-			debugger;
 			currentResponse(message, object);
 		}
 		else {
