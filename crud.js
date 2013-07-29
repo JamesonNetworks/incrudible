@@ -56,7 +56,19 @@ function loadFromCollection() {
 					}
 				}
 				else {
-		            var cursor = collection.find({ id : currentObject.id, useruuid: currentObject.useruuid }).toArray(function(err, documents) {
+					if(currentObject.hasParameters) {
+			            var cursor = collection.find(currentObject.parameters).toArray(function(err, documents) {
+			            	if(documents.length > 0) {
+			            		done("success", documents);
+			            	}
+			            	else {
+			            		done("not found");
+			            	}
+			            	db.close();
+			            });
+					}
+					else {
+		            	var cursor = collection.find({ id : currentObject.id, useruuid: currentObject.useruuid }).toArray(function(err, documents) {
 		            	if(documents.length > 0) {
 		            		done("success", documents);
 		            	}
@@ -65,6 +77,7 @@ function loadFromCollection() {
 		            	}
 		            	db.close();
 		            });
+					}
 	            }
 			})
 		}
