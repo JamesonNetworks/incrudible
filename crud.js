@@ -91,25 +91,23 @@ function saveToCollection() {
     	} 
     	else {
 			db.createCollection(currentObject.structure, function(err, collection) {
-				var failedConstraintCheck = false;
-				var constraintCheckResults = {};
 				if(currentObject.constraints) {
-					for(var i = 0; i < constraints.length; i++) {
-						constraintCheckResults += constraints[i]: violatesConstraint(constraint, currentObject);
-						if(constraintCheckResults.constraints[i] == true) {
-							failedConstraintCheck = true;
+					checkConstraints(currentObject, function(results, failed) {
+						if(failed) {
+							ary = [];
+							ary.push(results);
+							done("failure", ary);
+							db.close();
 						}
-					}
-				}
-				else {
-					constraintCheckResult = [];
-				}
-				if(failedConstraintCheck) {
-					ary = [];
-					ary.push(constraintCheckResults);
-					done("failure", ary);
-					db.close();
-				}
+						else {
+							collection.insert(currentObject);
+							currentObject.constraints = null;
+							ary = [];
+							ary.push(currentObject);
+							done("success", ary);
+							db.close();
+						}
+				})
 				else {
 					collection.insert(currentObject);
 					ary = [];
@@ -165,8 +163,46 @@ function done(message, object) {
 	}
 }
 
+function checkConstraints(object, callback) {
+	if(object.constraints) {
+		var failed = false;
+		var constraintCheckResults;
+		for(var i = 0; i < object.constraints.length; i++) {
+			var constraintCheckResults += constraints[i]: violatesConstraint(constraint, currentObject);
+			if(constraintCheckResults.constraints[i] == true) {
+				failed = true;
+			}
+		}
+		callback(constraintCheckResults, failed);
+	}
+	else {
+		throw new Error("Object does not have any constraints");
+	}
+}
+
 function violatesConstraint(constraint, object) {
-	return false;
+	switch(constraint.name) {
+		case 'unique':
+			db.collection(currentObject.structure, function(err, collection) {
+				collection.find({constraint["name"]: constraint.key}).toArray(function (err, docs) {
+					if(docs.length > 0) {
+						return true;
+					}
+					else {
+						return false;
+					}
+				}
+			});
+		break;
+		case 'mustHave':
+			return false;
+		break;
+		case 'mustBelongTo':
+			return false;
+		break;
+		default:
+			return false;
+	}
 }
 
 // This accepts a database connection string, a mongoose model, the object to save,
