@@ -169,7 +169,7 @@ function checkConstraints(object, callback) {
 		var failed = false;
 		var constraintCheckResults;
 		for(var i = 0; i < object.constraints.length; i++) {
-			var constraintCheckResults += constraints[i]: violatesConstraint(constraint, currentObject);
+			constraintCheckResults += constraints[i]: violatesConstraint(constraint, currentObject);
 			if(constraintCheckResults.constraints[i] == true) {
 				failed = true;
 			}
