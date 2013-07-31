@@ -91,11 +91,32 @@ function saveToCollection() {
     	} 
     	else {
 			db.createCollection(currentObject.structure, function(err, collection) {
-				collection.insert(currentObject);
-				ary = [];
-				ary.push(currentObject);
-				done("success", ary);
-				db.close();
+				var failedConstraintCheck = false;
+				var constraintCheckResults = {};
+				if(currentObject.constraints) {
+					for(var i = 0; i < constraints.length; i++) {
+						constraintCheckResults += constraints[i]: violatesConstraint(constraint, currentObject);
+						if(constraintCheckResults.constraints[i] == true) {
+							failedConstraintCheck = true;
+						}
+					}
+				}
+				else {
+					constraintCheckResult = [];
+				}
+				if(failedConstraintCheck) {
+					ary = [];
+					ary.push(constraintCheckResults);
+					done("failure", ary);
+					db.close();
+				}
+				else {
+					collection.insert(currentObject);
+					ary = [];
+					ary.push(currentObject);
+					done("success", ary);
+					db.close();
+				}
 			})
 		}
 	});
@@ -142,6 +163,10 @@ function done(message, object) {
 			currentResponse.end();
 		}
 	}
+}
+
+function violatesConstraint(constraint, object) {
+	return false;
 }
 
 // This accepts a database connection string, a mongoose model, the object to save,
