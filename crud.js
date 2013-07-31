@@ -107,7 +107,8 @@ function saveToCollection() {
 							done("success", ary);
 							db.close();
 						}
-				})
+					});
+				}
 				else {
 					collection.insert(currentObject);
 					ary = [];
