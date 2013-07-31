@@ -167,10 +167,11 @@ function done(message, object) {
 function checkConstraints(object, callback) {
 	if(object.constraints) {
 		var failed = false;
-		var constraintCheckResults;
+		var constraintCheckResults =[];
 		for(var i = 0; i < object.constraints.length; i++) {
-			constraintCheckResults += constraints[i]: violatesConstraint(constraint, currentObject);
-			if(constraintCheckResults.constraints[i] == true) {
+			constraintCheckResults.push(new { constraint.name, violatesConstraint(constraint, currentObject) });
+			debugger;
+			if(constraintCheckResults.last == true) {
 				failed = true;
 			}
 		}
