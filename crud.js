@@ -170,7 +170,7 @@ function checkConstraints(object, callback) {
 		var constraintCheckResults =[];
 		debugger;
 		for(var i = 0; i < object.constraints.length; i++) {
-			constraintCheckResults.push(new { object.constraints[i].name, violatesConstraint(object.constraints[i], object) });
+			constraintCheckResults.push({ object.constraints[i].name, violatesConstraint(object.constraints[i], object) });
 			if(constraintCheckResults.last == true) {
 				failed = true;
 			}
