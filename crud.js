@@ -187,16 +187,18 @@ function checkConstraints(object, callback) {
 function violatesConstraint(constraint, object) {
 	switch(constraint.name) {
 		case 'unique':
-			db.collection(currentObject.structure, function(err, collection) {
-				collection.find({constraint["name"]: constraint.key}).toArray(function (err, docs) {
-					if(docs.length > 0) {
-						return true;
-					}
-					else {
-						return false;
-					}
-				}
-			});
+			//db.collection(currentObject.structure, function(err, collection) {
+			// 	collection.find({constraint["name"]: constraint.key}).toArray(function (err, docs) {
+			// 		if(docs.length > 0) {
+			// 			return true;
+			// 		}
+			// 		else {
+			// 			return false;
+			// 		}
+			// 	}
+			//});
+			//})
+			return false;
 		break;
 		case 'mustHave':
 			return false;
