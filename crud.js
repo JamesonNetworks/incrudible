@@ -90,6 +90,7 @@ function saveToCollection() {
         	console.log(err);
     	} 
     	else {
+    		debugger;
 			db.createCollection(currentObject.structure, function(err, collection) {
 				if(currentObject.constraints) {
 					checkConstraints(currentObject, function(results, failed) {
@@ -165,6 +166,7 @@ function done(message, object) {
 }
 
 function checkConstraints(object, callback) {
+	debugger;
 	if(object.constraints) {
 		var failed = false;
 		var constraintCheckResults =[];
