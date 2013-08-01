@@ -168,7 +168,6 @@ function checkConstraints(object, callback) {
 	if(object.constraints) {
 		var failed = false;
 		var constraintCheckResults =[];
-		debugger;
 		for(var i = 0; i < object.constraints.length; i++) {
 			debugger;
 			//var check = violatesConstraint(object.constraints[i], object);
