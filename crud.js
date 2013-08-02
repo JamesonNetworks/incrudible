@@ -98,11 +98,30 @@ function saveToCollection() {
 					db.close();
 				}
 				else {
-					collection.insert(currentObject);
-					ary = [];
-					ary.push(currentObject);
-					done("success", ary);
-					db.close();
+					collection.insert(currentObject, function(err) {
+						if(err) {
+							debugger;
+							switch(err.code) {
+								case 11000:
+									ary = [];
+									ary.push({structure: "error", message: "A duplicate entry exists" });
+									done("failure", ary);
+									db.close();
+								break;
+								default:
+									console.error("A database error has occured: " + JSON.stringify(err));
+									ary = [];
+									ary.push({structure: "error"});
+									done("failure", ary);
+							}
+						}
+						else {
+							ary = [];
+							ary.push(currentObject);
+							done("success", ary);
+							db.close();
+						}
+					});
 				}
 			})
 		}
@@ -157,7 +176,7 @@ function done(message, object) {
 // model will be saved and the response outputted to the response. If the response 
 // is a callback, the message will be sent to the callback.
 module.exports = function crud(dbName, object, method, response) {
-	db = new Db(dbName, new Server(conf.db.host, conf.db.port), {safe:false});
+	db = new Db(dbName, new Server(conf.db.host, conf.db.port), {safe:true});
 	//Determine if the passed in object is an object or a callback
 	if (typeof response === 'function') {
 		// We have a function!
