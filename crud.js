@@ -90,25 +90,12 @@ function saveToCollection() {
         	console.log(err);
     	} 
     	else {
-    		debugger;
 			db.createCollection(currentObject.structure, function(err, collection) {
-				if(currentObject.constraints) {
-					checkConstraints(currentObject, function(results, failed) {
-						if(failed) {
-							ary = [];
-							ary.push(results);
-							done("failure", ary);
-							db.close();
-						}
-						else {
-							collection.insert(currentObject);
-							currentObject.constraints = null;
-							ary = [];
-							ary.push(currentObject);
-							done("success", ary);
-							db.close();
-						}
-					});
+				if(err) {
+					ary = [];
+					ary.push(err);
+					done("failure", ary);
+					db.close();
 				}
 				else {
 					collection.insert(currentObject);
@@ -162,53 +149,6 @@ function done(message, object) {
 			currentResponse.write("\"" + object[0].structure + "Container\" : " + JSON.stringify(object) + "}");
 			currentResponse.end();
 		}
-	}
-}
-
-function checkConstraints(object, callback) {
-	debugger;
-	if(object.constraints) {
-		var failed = false;
-		var constraintCheckResults =[];
-		for(var i = 0; i < object.constraints.length; i++) {
-			debugger;
-			//var check = violatesConstraint(object.constraints[i], object);
-			//constraintCheckResults.push({ object.constraints[i].name, check, object) });
-			if(constraintCheckResults.last.check == true) {
-				failed = true;
-			}
-		}
-		callback(constraintCheckResults, failed);
-	}
-	else {
-		throw new Error("Object does not have any constraints");
-	}
-}
-
-function violatesConstraint(constraint, object) {
-	switch(constraint.name) {
-		case 'unique':
-			//db.collection(currentObject.structure, function(err, collection) {
-			// 	collection.find({constraint["name"]: constraint.key}).toArray(function (err, docs) {
-			// 		if(docs.length > 0) {
-			// 			return true;
-			// 		}
-			// 		else {
-			// 			return false;
-			// 		}
-			// 	}
-			//});
-			//})
-			return false;
-		break;
-		case 'mustHave':
-			return false;
-		break;
-		case 'mustBelongTo':
-			return false;
-		break;
-		default:
-			return false;
 	}
 }
 
