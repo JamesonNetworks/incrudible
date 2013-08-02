@@ -1,6 +1,6 @@
 {
   "name": "incrudible",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "CRUD Operation Management",
   "homepage": "http://www.semipho.com",
   "main": "./crud.js",
