@@ -33,7 +33,9 @@ function loadFromCollection() {
 				var returnItem;
 				if(currentObject.isCollection) {
 					if(currentObject.hasParameters) {
+						debugger;
 						var cursor = collection.find(currentObject.parameters).toArray(function (err, documents) {
+		            		debugger;
 			            	if(documents.length > 0) {
 			            		done("success", documents);
 			            	}
