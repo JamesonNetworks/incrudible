@@ -33,9 +33,7 @@ function loadFromCollection() {
 				var returnItem;
 				if(currentObject.isCollection) {
 					if(currentObject.hasParameters) {
-						debugger;
 						var cursor = collection.find(currentObject.parameters).toArray(function (err, documents) {
-		            		debugger;
 			            	if(documents.length > 0) {
 			            		done("success", documents);
 			            	}
@@ -102,7 +100,6 @@ function saveToCollection() {
 				else {
 					collection.insert(currentObject, function(err) {
 						if(err) {
-							debugger;
 							switch(err.code) {
 								case 11000:
 									ary = [];
@@ -161,15 +158,38 @@ function done(message, object) {
 		}
 	}
 	else {
-		if(returnToCallback) {
-			currentResponse(message, object);
-		}
-		else {
-			currentResponse.writeHead(200, '{ Content-Type : application/json }');
-			currentResponse.write("{ \"message\": \"" + message + "\",");
-			currentResponse.write("\"" + object[0].structure + "Container\" : " + JSON.stringify(object) + "}");
-			currentResponse.end();
-		}
+		var removePasswordAndSaltCallback = function(message, object) {
+			if(returnToCallback) {
+				currentResponse(message, object);
+			}
+			else {
+				currentResponse.writeHead(200, '{ Content-Type : application/json }');
+				currentResponse.write("{ \"message\": \"" + message + "\",");
+				currentResponse.write("\"" + object[0].structure + "Container\" : " + JSON.stringify(object) + "}");
+				currentResponse.end();
+			}
+		};
+		var removePasswordAndSalt = function(message, object, callback){
+			for(var i=0; i < object.length; i++) {
+				if('password' in object[i]) {
+					delete object[i].password;
+				}
+				if('salt' in object[i]) {
+					delete object[i].salt;
+				}
+				if('passwordScheme' in object[i]) {
+					delete object[i].passwordScheme;
+				}
+				if('roles' in object[i]) {
+					delete object[i].roles;
+				}
+				if(i == object.length-1) {
+					callback(message, object);
+				}
+			}
+		};
+		removePasswordAndSalt(message, object, removePasswordAndSaltCallback);
+
 	}
 }
 
