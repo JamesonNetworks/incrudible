@@ -33,9 +33,8 @@ function loadFromCollection() {
 				var returnItem;
 				if(currentObject.isCollection) {
 					if(currentObject.hasParameters) {
-						debugger;
+						currentObject.parameters.deleted = {$exists:false};
 						var cursor = collection.find(currentObject.parameters).toArray(function (err, documents) {
-		            		debugger;
 			            	if(documents.length > 0) {
 			            		done("success", documents);
 			            	}
@@ -46,7 +45,10 @@ function loadFromCollection() {
 						});
 					}
 					else {
-						var cursor = collection.find({useruuid: currentObject.useruuid}).toArray(function (err, documents) {
+						var cursor = collection.find({
+							useruuid: currentObject.useruuid,
+							deleted:{$exists:false} 
+							}).toArray(function (err, documents) {
 			            	if(documents.length > 0) {
 			            		done("success", documents);
 			            	}
@@ -59,6 +61,7 @@ function loadFromCollection() {
 				}
 				else {
 					if(currentObject.hasParameters) {
+						currentObject.parameters.deleted = {$exists:false};
 			            var cursor = collection.find(currentObject.parameters).toArray(function(err, documents) {
 			            	if(documents.length > 0) {
 			            		done("success", documents);
@@ -70,7 +73,11 @@ function loadFromCollection() {
 			            });
 					}
 					else {
-		            	var cursor = collection.find({ id : currentObject.id, useruuid: currentObject.useruuid }).toArray(function(err, documents) {
+		            	var cursor = collection.find({ 
+		            		id : currentObject.id, 
+		            		useruuid: currentObject.useruuid,
+		            		deleted:{$exists:false}
+		            		}).toArray(function(err, documents) {
 		            	if(documents.length > 0) {
 		            		done("success", documents);
 		            	}
@@ -102,7 +109,6 @@ function saveToCollection() {
 				else {
 					collection.insert(currentObject, function(err) {
 						if(err) {
-							debugger;
 							switch(err.code) {
 								case 11000:
 									ary = [];
@@ -137,11 +143,14 @@ function deleteFromCollection() {
     	} 
     	else {
 			db.collection(currentObject.structure, function(err, collection) {
-				collection.remove({id : currentObject.id}, function(err) {
+				collection.update({uuid: currentObject.uuid},
+				{
+					$set: { 'deleted': true },
+				}, function(err) {
 					if(err) {
 						console.log(err);
 					}
-					done("success", currentObject);
+					done("success");
 					db.close();
 				});
 			})
