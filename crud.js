@@ -142,18 +142,52 @@ function deleteFromCollection() {
         	console.log(err);
     	} 
     	else {
-			db.collection(currentObject.structure, function(err, collection) {
-				collection.update({uuid: currentObject.uuid},
-				{
-					$set: { 'deleted': true },
-				}, function(err) {
-					if(err) {
-						console.log(err);
-					}
-					done("success");
-					db.close();
-				});
-			})
+    		debugger;
+    		if(currentObject.isCollection) {
+				if(currentObject.hasParameters) {
+					db.collection(currentObject.structure, function(err, collection) {
+						collection.update(currentObject.parameters, {
+							$set: { 'deleted': true },
+						}, function(err) {
+							if(err) {
+								console.log(err);
+							}
+							done("success");
+							db.close();
+						});
+					});
+				}
+			}
+			else {
+				if(currentObject.hasParameters) {
+					db.collection(currentObject.structure, function(err, collection) {
+						collection.update(currentObject.parameters,
+						{
+							$set: { 'deleted': true },
+						}, function(err) {
+							if(err) {
+								console.log(err);
+							}
+							done("success");
+							db.close();
+						});
+					})
+				}
+				else {
+					db.collection(currentObject.structure, function(err, collection) {
+						collection.update({uuid: currentObject.uuid},
+						{
+							$set: { 'deleted': true },
+						}, function(err) {
+							if(err) {
+								console.log(err);
+							}
+							done("success");
+							db.close();
+						});
+					})
+				}
+			}
 		}
 	});
 }
