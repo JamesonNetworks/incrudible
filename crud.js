@@ -20,69 +20,69 @@ function SAVE_SUCCESS(object) {
 };
 
 //Private helper functions
-function loadFromCollection() {
+function loadFromCollection(response, method, object) {
 	db.open(function(err, db) {
 		if (err) {
         	console.log(err);
     	} 
     	else {
-			db.collection(currentObject.structure, function(err, collection) {
+			db.collection(object.structure, function(err, collection) {
 				if(err) {
 					console.log(err);
 				}
 				var returnItem;
-				if(currentObject.isCollection) {
-					if(currentObject.hasParameters) {
-						currentObject.parameters.deleted = {$exists:false};
-						var cursor = collection.find(currentObject.parameters).toArray(function (err, documents) {
+				if(object.isCollection) {
+					if(object.hasParameters) {
+						object.parameters.deleted = {$exists:false};
+						var cursor = collection.find(object.parameters).toArray(function (err, documents) {
 			            	if(documents.length > 0) {
-			            		done("success", documents);
+			            		done(response, method, documents, "success");
 			            	}
 			            	else {
-			            		done("not found");
+			            		done(response, method, null, "not found");
 			            	}
 			            	db.close();
 						});
 					}
 					else {
 						var cursor = collection.find({
-							useruuid: currentObject.useruuid,
+							useruuid: object.useruuid,
 							deleted:{$exists:false} 
 							}).toArray(function (err, documents) {
 			            	if(documents.length > 0) {
-			            		done("success", documents);
+			            		done(response, method, documents, "success");
 			            	}
 			            	else {
-			            		done("not found");
+			            		done(response, method, null, "not found");
 			            	}
 			            	db.close();
 						});
 					}
 				}
 				else {
-					if(currentObject.hasParameters) {
-						currentObject.parameters.deleted = {$exists:false};
-			            var cursor = collection.find(currentObject.parameters).toArray(function(err, documents) {
+					if(object.hasParameters) {
+						object.parameters.deleted = {$exists:false};
+			            var cursor = collection.find(object.parameters).toArray(function(err, documents) {
 			            	if(documents.length > 0) {
-			            		done("success", documents);
+			            		done(response, method, documents, "success");
 			            	}
 			            	else {
-			            		done("not found");
+			            		done(response, method, null, "not found");
 			            	}
 			            	db.close();
 			            });
 					}
 					else {
 		            	var cursor = collection.find({ 
-		            		id : currentObject.id, 
-		            		useruuid: currentObject.useruuid,
+		            		id : object.id, 
+		            		useruuid: object.useruuid,
 		            		deleted:{$exists:false}
 		            		}).toArray(function(err, documents) {
 		            	if(documents.length > 0) {
-		            		done("success", documents);
+		            		done(response, method, documents, "success");
 		            	}
 		            	else {
-		            		done("not found");
+		            		done(response, method, object, "not found");
 		            	}
 		            	db.close();
 		            });
@@ -93,40 +93,40 @@ function loadFromCollection() {
 	});
 }
 
-function saveToCollection() {
+function saveToCollection(response, method, object) {
 	db.open(function(err, db) {
 		if (err) {
         	console.log(err);
     	} 
     	else {
-			db.createCollection(currentObject.structure, function(err, collection) {
+			db.createCollection(object.structure, function(err, collection) {
 				if(err) {
 					ary = [];
 					ary.push(err);
-					done("failure", ary);
+					done(response, method, ary, "failure");
 					db.close();
 				}
 				else {
-					collection.insert(currentObject, function(err) {
+					collection.insert(object, function(err) {
 						if(err) {
 							switch(err.code) {
 								case 11000:
 									ary = [];
 									ary.push({structure: "error", message: "A duplicate entry exists" });
-									done("failure", ary);
+									done(response, method, ary, "failure");
 									db.close();
 								break;
 								default:
 									console.error("A database error has occured: " + JSON.stringify(err));
 									ary = [];
 									ary.push({structure: "error"});
-									done("failure", ary);
+									done(response, method, ary, "failure");
 							}
 						}
 						else {
 							ary = [];
-							ary.push(currentObject);
-							done("success", ary);
+							ary.push(object);
+							done(response, method, ary, "success");
 							db.close();
 						}
 					});
@@ -136,53 +136,54 @@ function saveToCollection() {
 	});
 }
 
-function deleteFromCollection() {
+function deleteFromCollection(response, method, object) {
 	db.open(function(err, db) {
 		if (err) {
         	console.log(err);
     	} 
     	else {
-    		debugger;
-    		if(currentObject.isCollection) {
-				if(currentObject.hasParameters) {
-					db.collection(currentObject.structure, function(err, collection) {
-						collection.update(currentObject.parameters, {
+    		if(object.isCollection) {
+				if(object.hasParameters) {
+					db.collection(object.structure, function(err, collection) {
+						collection.update(object.parameters, {
 							$set: { 'deleted': true },
 						}, function(err) {
 							if(err) {
 								console.log(err);
 							}
-							done("success");
+							done(response, method, null, "success");
 							db.close();
 						});
 					});
 				}
 			}
 			else {
-				if(currentObject.hasParameters) {
-					db.collection(currentObject.structure, function(err, collection) {
-						collection.update(currentObject.parameters,
+				if(object.hasParameters) {
+					debugger;
+					db.collection(object.structure, function(err, collection) {
+						collection.update(object.parameters,
 						{
 							$set: { 'deleted': true },
 						}, function(err) {
 							if(err) {
 								console.log(err);
 							}
-							done("success");
+							done(response, method, null, "success");
 							db.close();
 						});
 					})
 				}
 				else {
-					db.collection(currentObject.structure, function(err, collection) {
-						collection.update({uuid: currentObject.uuid},
+					debugger;
+					db.collection(object.structure, function(err, collection) {
+						collection.update({uuid: object.uuid},
 						{
 							$set: { 'deleted': true },
 						}, function(err) {
 							if(err) {
 								console.log(err);
 							}
-							done("success");
+							done(response, method, null, "success");
 							db.close();
 						});
 					})
@@ -192,26 +193,55 @@ function deleteFromCollection() {
 	});
 }
 
-function done(message, object) {
+function updateInCollection(response, method, object) {
+	db.open(function(err, db) {
+		if (err) {
+        	console.log(err);
+    	} 
+    	else {
+    		if(object.hasParameters) {
+				db.collection(object.structure, function(err, collection) {
+					collection.update(object.parameters,
+					{
+						//TODO: Set up fields for updating. Delete Record? Not sure of best schemaless way to do this
+						$set: {processed: true}
+					}, function(err) {
+						if(err) {
+							console.log(err);
+						}
+						done(response, method, object, "success");
+						db.close();
+					});
+				})
+    		}
+    		else {
+    			done(response, method, null, "failure, no params");
+    			db.close();
+    		}
+    	}
+    });
+}
+
+function done(response, method, object, message) {
 	if(null == object) {
 		if(returnToCallback) {
-			currentResponse(message);
+			response(message);
 		}
 		else {
-			currentResponse.writeHead(200, '{ Content-Type : application/json }');
-			currentResponse.write("{ \"message\": \"" + message + "\"}");
-			currentResponse.end();
+			response.writeHead(200, '{ Content-Type : application/json }');
+			response.write("{ \"message\": \"" + message + "\"}");
+			response.end();
 		}
 	}
 	else {
 		if(returnToCallback) {
-			currentResponse(message, object);
+			response(message, object);
 		}
 		else {
-			currentResponse.writeHead(200, '{ Content-Type : application/json }');
-			currentResponse.write("{ \"message\": \"" + message + "\",");
-			currentResponse.write("\"" + object[0].structure + "Container\" : " + JSON.stringify(object) + "}");
-			currentResponse.end();
+			response.writeHead(200, '{ Content-Type : application/json }');
+			response.write("{ \"message\": \"" + message + "\",");
+			response.write("\"" + object[0].structure + "Container\" : " + JSON.stringify(object) + "}");
+			response.end();
 		}
 	}
 }
@@ -231,20 +261,25 @@ module.exports = function crud(dbName, object, method, response) {
 		returnToCallback = false;
 	}
 
-	// Setup variables for use in save and load
-	currentResponse = response;
-	currentMethod = method;
-	currentObject = object;
+	// // Setup variables for use in save and load
+	// currentResponse = response;
+	// currentMethod = method;
+	// currentObject = object;
 
-	switch(currentMethod) {
+	//response, method, object
+
+	switch(method) {
 		case 'POST':
-			saveToCollection();
+			saveToCollection(response, method, object);
 		break;
 		case 'GET':
-			loadFromCollection();
+			loadFromCollection(response, method, object);
 		break;
 		case 'DELETE':
-			deleteFromCollection();
+			deleteFromCollection(response, method, object);
+		break;
+		case 'PUT':
+			updateInCollection(response, method, object);
 		break;
 		default:
 			throw new Error('Unsupported method');
