@@ -193,6 +193,22 @@ function deleteFromCollection(response, method, object) {
 	});
 }
 
+function getFieldToUpdate(object) {
+	var returnObject = {};
+	switch(object.field) { 
+	case 'processed':
+		returnObject.processed = true;
+		return returnObject;
+	case 'metadata':
+		returnObject.metadata = object.metadata;
+		return returnObject;
+	break;
+	default:
+		console.log('ERR, Error in updating, no valid fields to update were passed');
+		return {};
+	}
+}
+
 function updateInCollection(response, method, object) {
 	db.open(function(err, db) {
 		if (err) {
@@ -201,10 +217,10 @@ function updateInCollection(response, method, object) {
     	else {
     		if(object.hasParameters) {
 				db.collection(object.structure, function(err, collection) {
+					var field = getFieldToUpdate(object);
 					collection.update(object.parameters,
 					{
-						//TODO: Set up fields for updating. Delete Record? Not sure of best schemaless way to do this
-						$set: {processed: true}
+						$set: field
 					}, function(err) {
 						if(err) {
 							console.log(err);
@@ -240,7 +256,13 @@ function done(response, method, object, message) {
 		else {
 			response.writeHead(200, '{ Content-Type : application/json }');
 			response.write("{ \"message\": \"" + message + "\",");
-			response.write("\"" + object[0].structure + "Container\" : " + JSON.stringify(object) + "}");
+			if('structure' in object[0]) {
+				response.write("\"" + object[0].structure + "Container\" : " + JSON.stringify(object) + "}");
+			}
+			else {
+				console.log('ERR, Structure not found in object: ' + JSON.stringify(object));
+				response.write("\"" + object[0] + "Container\" : " + JSON.stringify(object) + "}");
+			}
 			response.end();
 		}
 	}
