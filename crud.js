@@ -256,7 +256,7 @@ function done(response, method, object, message) {
 		else {
 			response.writeHead(200, '{ Content-Type : application/json }');
 			response.write("{ \"message\": \"" + message + "\",");
-			if('structure' in object[0]) {
+			if(object[0] != null && 'structure' in object[0]) {
 				response.write("\"" + object[0].structure + "Container\" : " + JSON.stringify(object) + "}");
 			}
 			else {
