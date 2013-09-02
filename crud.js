@@ -251,7 +251,12 @@ function done(response, method, object, message) {
 	}
 	else {
 		if(returnToCallback) {
-			response(message, object);
+			if(message != null && object != null) {
+				response(message, object);
+			}
+			else {
+				//Do nothing
+			}
 		}
 		else {
 			if(response != null) {
