@@ -168,14 +168,19 @@ var operations = {
 		if(object.isCollection) {
 			if(object.hasParameters) {
 				db.collection(object.structure, function(err, collection) {
-					collection.update(object.parameters, {
-						$set: { 'deleted': true },
-					}, function(err) {
-						if(err) {
-							console.log(err);
+					collection.find(object.parameters).toArray(function(err, documents) {
+						for(var i=0; i<documents.length; i++) {
+							documents[i].deleted = true;
+							collection.save(documents[i], function(err) {
+								if(err) {
+									console.log(err);
+								}
+							});
+							if(i == documents.length-1) {
+								done(response, method, null, "success", returnToCallback);
+								db.close();
+							}
 						}
-						done(response, method, null, "success", returnToCallback);
-						db.close();
 					});
 				});
 			}
@@ -185,7 +190,7 @@ var operations = {
 				db.collection(object.structure, function(err, collection) {
 					collection.update(object.parameters,
 					{
-						$set: { 'deleted': true },
+						$set: { deleted: true },
 					}, function(err) {
 						if(err) {
 							console.log(err);
@@ -199,7 +204,7 @@ var operations = {
 				db.collection(object.structure, function(err, collection) {
 					collection.update({uuid: object.uuid},
 					{
-						$set: { 'deleted': true },
+						$set: { deleted: true },
 					}, function(err) {
 						if(err) {
 							console.log(err);
@@ -262,6 +267,7 @@ module.exports = function crud(dbName, object, method, response) {
 			// currentObject = object;
 
 			//response, method, object
+
 			switch(method) {
 				case 'POST':
 					operations.create(openDb, response, method, object, returnToCallback);
