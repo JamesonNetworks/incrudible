@@ -1,197 +1,7 @@
+// Internal references
 var Db = require('mongodb').Db,
 	Server = require('mongodb').Server,
 	conf = require('./config.json');
-
-var currentModel = {};
-var currentMethod = {};
-var currentResponse = {};
-var currentObject = {};
-
-var status = {};
-var message = {};
-
-var returnToCallback = false;
-
-var db = {};
-
-// Save success message generator
-function SAVE_SUCCESS(object) { 
-	return { status: "success", message: "The " + object.structure + " has been successfully saved"};
-};
-
-//Private helper functions
-function loadFromCollection(response, method, object) {
-	db.open(function(err, db) {
-		if (err) {
-        	console.log(err);
-    	} 
-    	else {
-			db.collection(object.structure, function(err, collection) {
-				if(err) {
-					console.log(err);
-				}
-				var returnItem;
-				if(object.isCollection) {
-					if(object.hasParameters) {
-						object.parameters.deleted = {$exists:false};
-						var cursor = collection.find(object.parameters).toArray(function (err, documents) {
-			            	if(documents.length > 0) {
-			            		done(response, method, documents, "success");
-			            	}
-			            	else {
-			            		done(response, method, null, "not found");
-			            	}
-			            	db.close();
-						});
-					}
-					else {
-						var cursor = collection.find({
-							useruuid: object.useruuid,
-							deleted:{$exists:false} 
-							}).toArray(function (err, documents) {
-			            	if(documents.length > 0) {
-			            		done(response, method, documents, "success");
-			            	}
-			            	else {
-			            		done(response, method, null, "not found");
-			            	}
-			            	db.close();
-						});
-					}
-				}
-				else {
-					if(object.hasParameters) {
-						object.parameters.deleted = {$exists:false};
-			            var cursor = collection.find(object.parameters).toArray(function(err, documents) {
-			            	if(documents.length > 0) {
-			            		done(response, method, documents, "success");
-			            	}
-			            	else {
-			            		done(response, method, null, "not found");
-			            	}
-			            	db.close();
-			            });
-					}
-					else {
-		            	var cursor = collection.find({ 
-		            		id : object.id, 
-		            		useruuid: object.useruuid,
-		            		deleted:{$exists:false}
-		            		}).toArray(function(err, documents) {
-		            	if(documents.length > 0) {
-		            		done(response, method, documents, "success");
-		            	}
-		            	else {
-		            		done(response, method, object, "not found");
-		            	}
-		            	db.close();
-		            });
-					}
-	            }
-			})
-		}
-	});
-}
-
-function saveToCollection(response, method, object) {
-	db.open(function(err, db) {
-		if (err) {
-        	console.log(err);
-    	} 
-    	else {
-			db.createCollection(object.structure, function(err, collection) {
-				if(err) {
-					ary = [];
-					ary.push(err);
-					done(response, method, ary, "failure");
-					db.close();
-				}
-				else {
-					collection.insert(object, function(err) {
-						if(err) {
-							switch(err.code) {
-								case 11000:
-									ary = [];
-									ary.push({structure: "error", message: "A duplicate entry exists" });
-									done(response, method, ary, "failure");
-									db.close();
-								break;
-								default:
-									console.error("A database error has occured: " + JSON.stringify(err));
-									ary = [];
-									ary.push({structure: "error"});
-									done(response, method, ary, "failure");
-							}
-						}
-						else {
-							ary = [];
-							ary.push(object);
-							done(response, method, ary, "success");
-							db.close();
-						}
-					});
-				}
-			})
-		}
-	});
-}
-
-function deleteFromCollection(response, method, object) {
-	db.open(function(err, db) {
-		if (err) {
-        	console.log(err);
-    	} 
-    	else {
-    		if(object.isCollection) {
-				if(object.hasParameters) {
-					db.collection(object.structure, function(err, collection) {
-						collection.update(object.parameters, {
-							$set: { 'deleted': true },
-						}, function(err) {
-							if(err) {
-								console.log(err);
-							}
-							done(response, method, null, "success");
-							db.close();
-						});
-					});
-				}
-			}
-			else {
-				if(object.hasParameters) {
-					debugger;
-					db.collection(object.structure, function(err, collection) {
-						collection.update(object.parameters,
-						{
-							$set: { 'deleted': true },
-						}, function(err) {
-							if(err) {
-								console.log(err);
-							}
-							done(response, method, null, "success");
-							db.close();
-						});
-					})
-				}
-				else {
-					debugger;
-					db.collection(object.structure, function(err, collection) {
-						collection.update({uuid: object.uuid},
-						{
-							$set: { 'deleted': true },
-						}, function(err) {
-							if(err) {
-								console.log(err);
-							}
-							done(response, method, null, "success");
-							db.close();
-						});
-					})
-				}
-			}
-		}
-	});
-}
 
 function getFieldToUpdate(object) {
 	var returnObject = {};
@@ -209,36 +19,7 @@ function getFieldToUpdate(object) {
 	}
 }
 
-function updateInCollection(response, method, object) {
-	db.open(function(err, db) {
-		if (err) {
-        	console.log(err);
-    	} 
-    	else {
-    		if(object.hasParameters) {
-				db.collection(object.structure, function(err, collection) {
-					var field = getFieldToUpdate(object);
-					collection.update(object.parameters,
-					{
-						$set: field
-					}, function(err) {
-						if(err) {
-							console.log(err);
-						}
-						done(response, method, object, "success");
-						db.close();
-					});
-				})
-    		}
-    		else {
-    			done(response, method, null, "failure, no params");
-    			db.close();
-    		}
-    	}
-    });
-}
-
-function done(response, method, object, message) {
+function done(response, method, object, message, returnToCallback) {
 	if(null == object) {
 		if(returnToCallback) {
 			response(message);
@@ -275,43 +56,228 @@ function done(response, method, object, message) {
 	}
 }
 
+// Save success message generator
+function SAVE_SUCCESS(object) { 
+	return { status: "success", message: "The " + object.structure + " has been successfully saved"};
+}
+
+var operations = {
+	read: function(db, response, method, object, returnToCallback) {
+		db.collection(object.structure, function(err, collection) {
+			if(err) {
+				console.log(err);
+			}
+			var returnItem;
+			if(object.isCollection) {
+				if(object.hasParameters) {
+					object.parameters.deleted = {$exists:false};
+					var cursor = collection.find(object.parameters).toArray(function (err, documents) {
+		            	if(documents.length > 0) {
+		            		done(response, method, documents, "success", returnToCallback);
+		            	}
+		            	else {
+		            		done(response, method, null, "not found", returnToCallback);
+		            	}
+		            	db.close();
+					});
+				}
+				else {
+					var cursor = collection.find({
+						useruuid: object.useruuid,
+						deleted:{$exists:false} 
+						}).toArray(function (err, documents) {
+		            	if(documents.length > 0) {
+		            		done(response, method, documents, "success", returnToCallback);
+		            	}
+		            	else {
+		            		done(response, method, null, "not found", returnToCallback);
+		            	}
+		            	db.close();
+					});
+				}
+			}
+			else {
+				if(object.hasParameters) {
+					object.parameters.deleted = {$exists:false};
+		            var cursor = collection.find(object.parameters).toArray(function(err, documents) {
+		            	if(documents.length > 0) {
+		            		done(response, method, documents, "success", returnToCallback);
+		            	}
+		            	else {
+		            		done(response, method, null, "not found", returnToCallback);
+		            	}
+		            	db.close();
+		            });
+				}
+				else {
+	            	var cursor = collection.find({ 
+	            		id : object.id, 
+	            		useruuid: object.useruuid,
+	            		deleted:{$exists:false}
+	            		}).toArray(function(err, documents) {
+	            	if(documents.length > 0) {
+	            		done(response, method, documents, "success", returnToCallback);
+	            	}
+	            	else {
+	            		done(response, method, object, "not found", returnToCallback);
+	            	}
+	            	db.close();
+	            });
+				}
+            }
+		})
+	},
+
+	create: function(db, response, method, object, returnToCallback) {
+		db.createCollection(object.structure, function(err, collection) {
+			if(err) {
+				ary = [];
+				ary.push(err);
+				done(response, method, ary, "failure", returnToCallback);
+				db.close();
+			}
+			else {
+				collection.insert(object, function(err) {
+					if(err) {
+						switch(err.code) {
+							case 11000:
+								ary = [];
+								ary.push({structure: "error", message: "A duplicate entry exists" });
+								done(response, method, ary, "failure", returnToCallback);
+								db.close();
+							break;
+							default:
+								console.error("A database error has occured: " + JSON.stringify(err));
+								ary = [];
+								ary.push({structure: "error"});
+								done(response, method, ary, "failure", returnToCallback);
+						}
+					}
+					else {
+						ary = [];
+						ary.push(object);
+						done(response, method, ary, "success", returnToCallback);
+						db.close();
+					}
+				});
+			}
+		})
+	},
+
+	delete: function(db, response, method, object, returnToCallback) {
+		if(object.isCollection) {
+			if(object.hasParameters) {
+				db.collection(object.structure, function(err, collection) {
+					collection.update(object.parameters, {
+						$set: { 'deleted': true },
+					}, function(err) {
+						if(err) {
+							console.log(err);
+						}
+						done(response, method, null, "success", returnToCallback);
+						db.close();
+					});
+				});
+			}
+		}
+		else {
+			if(object.hasParameters) {
+				db.collection(object.structure, function(err, collection) {
+					collection.update(object.parameters,
+					{
+						$set: { 'deleted': true },
+					}, function(err) {
+						if(err) {
+							console.log(err);
+						}
+						done(response, method, null, "success", returnToCallback);
+						db.close();
+					});
+				})
+			}
+			else {
+				db.collection(object.structure, function(err, collection) {
+					collection.update({uuid: object.uuid},
+					{
+						$set: { 'deleted': true },
+					}, function(err) {
+						if(err) {
+							console.log(err);
+						}
+						done(response, method, null, "success", returnToCallback);
+						db.close();
+					});
+				})
+			}
+		}
+	},
+
+	update: function(db, response, method, object, returnToCallback) {
+		if(object.hasParameters) {
+			db.collection(object.structure, function(err, collection) {
+				var field = getFieldToUpdate(object);
+				collection.update(object.parameters,
+				{
+					$set: field
+				}, function(err) {
+					if(err) {
+						console.log(err);
+					}
+					done(response, method, object, "success", returnToCallback);
+					db.close();
+				});
+			})
+		}
+		else {
+			done(response, method, null, "failure, no params", returnToCallback);
+			db.close();
+		}	
+	}
+}
+
 // This accepts a database connection string, a mongoose model, the object to save,
 // and a response object. If the response object is an express response object, the
 // model will be saved and the response outputted to the response. If the response 
 // is a callback, the message will be sent to the callback.
 module.exports = function crud(dbName, object, method, response) {
-	db = new Db(dbName, new Server(conf.db.host, conf.db.port), {safe:true});
-	//Determine if the passed in object is an object or a callback
-	if (typeof response === 'function') {
-		// We have a function!
-		returnToCallback = true;
-	}
-	else {
-		returnToCallback = false;
-	}
+	var db = new Db(dbName, new Server(conf.db.host, conf.db.port), {safe:true});
+	db.open(function(err, openDb) {
+		if(err) {
+			console.log('ERR, There was a problem connecting to the database')
+		}
+		else {
+			var returnToCallback;
+			//Determine if the passed in object is an object or a callback
+			if (typeof response === 'function') {
+				// We have a function!
+				returnToCallback = true;
+			}
+			else {
+				returnToCallback = false;
+			}
 
-	// // Setup variables for use in save and load
-	// currentResponse = response;
-	// currentMethod = method;
-	// currentObject = object;
+			// // Setup variables for use in save and load
+			// currentResponse = response;
+			// currentMethod = method;
+			// currentObject = object;
 
-	//response, method, object
-
-	switch(method) {
-		case 'POST':
-			saveToCollection(response, method, object);
-		break;
-		case 'GET':
-			loadFromCollection(response, method, object);
-		break;
-		case 'DELETE':
-			deleteFromCollection(response, method, object);
-		break;
-		case 'PUT':
-			updateInCollection(response, method, object);
-		break;
-		default:
-			throw new Error('Unsupported method');
-	}
+			//response, method, object
+			switch(method) {
+				case 'POST':
+					operations.create(openDb, response, method, object, returnToCallback);
+				break;
+				case 'GET':
+					operations.read(openDb, response, method, object, returnToCallback);
+				break;
+				case 'DELETE':
+					operations.delete(openDb, response, method, object, returnToCallback);
+				break;
+				case 'PUT':
+					operations.update(openDb, response, method, object, returnToCallback);
+				break;
+				default:
+					throw new Error('Unsupported method');
+			}
+		}
+	});
 }
-
