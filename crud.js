@@ -83,7 +83,7 @@ var operations = {
 				}
 				else {
 					var cursor = collection.find({
-						useruuid: object.useruuid,
+						userUuid: object.userUuid,
 						deleted:{$exists:false} 
 						}).toArray(function (err, documents) {
 		            	if(documents.length > 0) {
@@ -112,7 +112,7 @@ var operations = {
 				else {
 	            	var cursor = collection.find({ 
 	            		id : object.id, 
-	            		useruuid: object.useruuid,
+	            		userUuid: object.userUuid,
 	            		deleted:{$exists:false}
 	            		}).toArray(function(err, documents) {
 	            	if(documents.length > 0) {
