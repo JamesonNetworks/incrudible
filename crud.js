@@ -52,16 +52,16 @@ function done(response, method, object, message, returnToCallback) {
 						response.write("\"" + object[0] + "Container\" : " + JSON.stringify(object) + "}");
 					}
 					response.end();
-				}
+				};
 				// Scrub mongo IDs off objects
-				function(callback) {
+				(function(callback) {
 					for(var i =0; i < object.length; i++) {
 						delete object[i]._id;
 						if(i == object.length-1) {
 							callback;
 						}
 					}
-				}
+				});
 			}
 		}
 	}
