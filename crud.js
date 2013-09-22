@@ -41,7 +41,7 @@ function done(response, method, object, message, returnToCallback) {
 		}
 		else {
 			if(response != null) {
-				var callback = function() {
+				var callback = function(message, object, response) {
 					response.writeHead(200, '{ Content-Type : application/json }');
 					response.write("{ \"message\": \"" + message + "\",");
 					if(object[0] != null && 'structure' in object[0]) {
@@ -53,15 +53,12 @@ function done(response, method, object, message, returnToCallback) {
 					}
 					response.end();
 				};
-				// Scrub mongo IDs off objects
-				(function(callback) {
-					for(var i =0; i < object.length; i++) {
-						delete object[i]._id;
-						if(i == object.length-1) {
-							callback;
-						}
+				for(var i =0; i < object.length; i++) {
+					delete object[i]._id;
+					if(i == object.length-1) {
+						callback(message, object, response);
 					}
-				});
+				}
 			}
 		}
 	}
