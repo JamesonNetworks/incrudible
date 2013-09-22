@@ -41,16 +41,27 @@ function done(response, method, object, message, returnToCallback) {
 		}
 		else {
 			if(response != null) {
-				response.writeHead(200, '{ Content-Type : application/json }');
-				response.write("{ \"message\": \"" + message + "\",");
-				if(object[0] != null && 'structure' in object[0]) {
-					response.write("\"" + object[0].structure + "Container\" : " + JSON.stringify(object) + "}");
+				var callback = function() {
+					response.writeHead(200, '{ Content-Type : application/json }');
+					response.write("{ \"message\": \"" + message + "\",");
+					if(object[0] != null && 'structure' in object[0]) {
+						response.write("\"" + object[0].structure + "Container\" : " + JSON.stringify(object) + "}");
+					}
+					else {
+						console.log('ERR, Structure not found in object: ' + JSON.stringify(object));
+						response.write("\"" + object[0] + "Container\" : " + JSON.stringify(object) + "}");
+					}
+					response.end();
 				}
-				else {
-					console.log('ERR, Structure not found in object: ' + JSON.stringify(object));
-					response.write("\"" + object[0] + "Container\" : " + JSON.stringify(object) + "}");
+				// Scrub mongo IDs off objects
+				function(callback) {
+					for(var i =0; i < object.length; i++) {
+						delete object[i]._id;
+						if(i == object.length-1) {
+							callback;
+						}
+					}
 				}
-				response.end();
 			}
 		}
 	}
